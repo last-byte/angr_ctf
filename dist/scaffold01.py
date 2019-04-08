@@ -2,7 +2,7 @@ import angr
 import sys
 
 def main(argv):
-  path_to_binary = ???
+  path_to_binary = "./01_angr_avoid"
   project = angr.Project(path_to_binary)
   initial_state = project.factory.entry_state()
   simulation = project.factory.simgr(initial_state)
@@ -13,13 +13,14 @@ def main(argv):
   # everything you will need to look at is near the beginning of the address 
   # space.
   # (!)
-  print_good_address = ???
-  will_not_succeed_address = ???
+  print_good_address = 0x80485dd
+  will_not_succeed_address = 0x80485a8
   simulation.explore(find=print_good_address, avoid=will_not_succeed_address)
 
   if simulation.found:
     solution_state = simulation.found[0]
-    print solution_state.posix.dumps(sys.stdin.fileno())
+    solution = solution_state.posix.dumps(sys.stdin.fileno())
+    print("[+] Success! Solution is: {}".format(solution.decode("utf-8")))
   else:
     raise Exception('Could not find the solution')
 
