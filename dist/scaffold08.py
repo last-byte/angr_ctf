@@ -45,18 +45,18 @@
 
 import angr
 import claripy
-import sys
 
-def main(argv):
-  path_to_binary = argv[1]
+def main():
+  path_to_binary = "./08_angr_constraints"
   project = angr.Project(path_to_binary)
 
-  start_address = ???
+  start_address = 0x8048625
   initial_state = project.factory.blank_state(addr=start_address)
 
-  password = claripy.BVS('password', ???)
+  password_size = 16
+  password = claripy.BVS('password', password_size * 8)
 
-  password_address = ???
+  password_address = 0x804a050
   initial_state.memory.store(password_address, password)
 
   simulation = project.factory.simgr(initial_state)
@@ -64,7 +64,7 @@ def main(argv):
   # Angr will not be able to reach the point at which the binary prints out
   # 'Good Job.'. We cannot use that as the target anymore.
   # (!)
-  address_to_check_constraint = ???
+  address_to_check_constraint = 0x8048673
   simulation.explore(find=address_to_check_constraint)
 
   if simulation.found:
@@ -74,8 +74,8 @@ def main(argv):
     # check_equals_ function. Determine the address that is being passed as the
     # parameter and load it into a bitvector so that we can constrain it.
     # (!)
-    constrained_parameter_address = ???
-    constrained_parameter_size_bytes = ???
+    constrained_parameter_address = password_address
+    constrained_parameter_size_bytes = password_size
     constrained_parameter_bitvector = solution_state.memory.load(
       constrained_parameter_address,
       constrained_parameter_size_bytes
@@ -84,7 +84,7 @@ def main(argv):
     # We want to constrain the system to find an input that will make
     # constrained_parameter_bitvector equal the desired value.
     # (!)
-    constrained_parameter_desired_value = ??? # :string
+    constrained_parameter_desired_value = "AUPDNNPROEZRJWKB" # :string
 
     # Specify a claripy expression (using Pythonic syntax) that tests whether
     # constrained_parameter_bitvector == constrained_parameter_desired_value.
@@ -94,14 +94,16 @@ def main(argv):
     
     # Add the constraint to the state to instruct z3 to include it when solving
     # for input.
-    solution_state.add_constraints(constrained_parameter_bitvector == constrained_parameter_desired_value)
+    #solution_state.add_constraints(constrained_parameter_bitvector == constrained_parameter_desired_value)
+    solution_state.add_constraints(constraint_expression)
+
 
     # Solve for the constrained_parameter_bitvector.
-    solution = ???
+    solution = solution_state.solver.eval(password, cast_to=bytes)
 
-    print solution
+    print("[+] Success! Solution is: {}".format(solution.decode("utf-8")))
   else:
     raise Exception('Could not find the solution')
 
 if __name__ == '__main__':
-  main(sys.argv)
+  main()
