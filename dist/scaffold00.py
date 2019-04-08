@@ -32,7 +32,7 @@ def main(argv):
   # line as follows:
   # python ./scaffold00.py [binary]
   # (!)
-  path_to_binary = ???  # :string
+  path_to_binary = "./00_angr_find" # path of the binary program
   project = angr.Project(path_to_binary)
 
   # Tell Angr where to start executing (should it start from the main()
@@ -49,7 +49,7 @@ def main(argv):
   # This function will keep executing until it either finds a solution or it 
   # has explored every possible path through the executable.
   # (!)
-  print_good_address = ???  # :integer (probably in hexadecimal)
+  print_good_address = 0x8048678  # :integer (probably in hexadecimal)
   simulation.explore(find=print_good_address)
 
   # Check that we have found a solution. The simulation.explore() method will
@@ -63,7 +63,8 @@ def main(argv):
 
     # Print the string that Angr wrote to stdin to follow solution_state. This 
     # is our solution.
-    print solution_state.posix.dumps(sys.stdin.fileno())
+    solution = solution_state.posix.dumps(sys.stdin.fileno())
+    print("[+] Success! Solution is: {}".format(solution.decode("utf-8")))
   else:
     # If Angr could not find a path that reaches print_good_address, throw an
     # error. Perhaps you mistyped the print_good_address?
