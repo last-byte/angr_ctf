@@ -12,7 +12,7 @@ import claripy
 import sys
 
 def main(argv):
-  path_to_binary = argv[1]
+  path_to_binary = "04_angr_symbolic_stack"
   project = angr.Project(path_to_binary)
 
   # For this challenge, we want to begin after the call to scanf. Note that this
@@ -38,7 +38,7 @@ def main(argv):
   # Given that we are not calling scanf in our Angr simulation, where should we
   # start?
   # (!)
-  start_address = ???
+  start_address = 0x8048697
   initial_state = project.factory.blank_state(addr=start_address)
 
   # We are jumping into the middle of a function! Therefore, we need to account
@@ -73,8 +73,8 @@ def main(argv):
   # handle 'scanf("%u")', but not 'scanf("%u %u")'.
   # You can either copy and paste the line below or use a Python list.
   # (!)
-  password0 = claripy.BVS('password0', ???)
-  ...
+  password0 = claripy.BVS('password0', 32)
+  password1 = claripy.BVS('password1', 32)
 
   # Here is the hard part. We need to figure out what the stack looks like, at
   # least well enough to inject our symbols where we want them. In order to do
@@ -118,7 +118,7 @@ def main(argv):
   #
   # Figure out how much space there is and allocate the necessary padding to
   # the stack by decrementing esp before you push the password bitvectors.
-  padding_length_in_bytes = ???  # :integer
+  padding_length_in_bytes = 0x08  # the last byte of password0 is @ EBP-0x09 so we have to fill until EBP-0x08 (included)
   initial_state.regs.esp -= padding_length_in_bytes
 
   # Push the variables to the stack. Make sure to push them in the right order!
@@ -129,29 +129,34 @@ def main(argv):
   # This will push the bitvector on the stack, and increment esp the correct
   # amount. You will need to push multiple bitvectors on the stack.
   # (!)
-  initial_state.stack_push(???)  # :bitvector (claripy.BVS, claripy.BVV, claripy.BV)
-  ...
+  initial_state.stack_push(password0)  # :bitvector (claripy.BVS, claripy.BVV, claripy.BV)
+  initial_state.stack_push(password1)  # :bitvector (claripy.BVS, claripy.BVV, claripy.BV)
+  
 
   simulation = project.factory.simgr(initial_state)
 
   def is_successful(state):
     stdout_output = state.posix.dumps(sys.stdout.fileno())
-    return ???
+    #print(stdout_output)
+    if b'Good Job.\n' in stdout_output:
+      return True
+    else: return False
 
   def should_abort(state):
     stdout_output = state.posix.dumps(sys.stdout.fileno())
-    return ???
+    if b'Try again.\n' in stdout_output:
+      return True
+    else: return False
 
   simulation.explore(find=is_successful, avoid=should_abort)
 
   if simulation.found:
     solution_state = simulation.found[0]
 
-    solution0 = solution_state.se.eval(password0)
-    ...
+    solution0 = (solution_state.solver.eval(password0))
+    solution1 = (solution_state.solver.eval(password1))
 
-    solution = ???
-    print solution
+    print("[+] Success! Solution is: {0} {1}".format(solution0, solution1))
   else:
     raise Exception('Could not find the solution')
 
