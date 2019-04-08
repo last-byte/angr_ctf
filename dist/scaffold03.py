@@ -7,14 +7,14 @@ import claripy
 import sys
 
 def main(argv):
-  path_to_binary = argv[1]
+  path_to_binary = "./03_angr_symbolic_registers"
   project = angr.Project(path_to_binary)
 
   # Sometimes, you want to specify where the program should start. The variable
   # start_address will specify where the symbolic execution engine should begin.
   # Note that we are using blank_state, not entry_state.
   # (!)
-  start_address = ???  # :integer (probably hexadecimal)
+  start_address = 0x08048980  # address right after the get_input function call
   initial_state = project.factory.blank_state(addr=start_address)
 
   # Create a symbolic bitvector (the datatype Angr uses to inject symbolic
@@ -25,9 +25,10 @@ def main(argv):
   # you need, dissassemble the binary and determine the format parameter passed
   # to scanf.
   # (!)
-  password0_size_in_bits = ???  # :integer
-  password0 = claripy.BVS('password0', password0_size_in_bits)
-  ...
+  password_size_in_bits = 32  # :integer
+  password0 = claripy.BVS('password0', password_size_in_bits)
+  password1 = claripy.BVS('password1', password_size_in_bits)
+  password2 = claripy.BVS('password2', password_size_in_bits)
 
   # Set a register to a symbolic value. This is one way to inject symbols into
   # the program.
@@ -41,18 +42,23 @@ def main(argv):
   # to inject which symbol, dissassemble the binary and look at the instructions
   # immediately following the call to scanf.
   # (!)
-  initial_state.regs.??? = password0
-  ...
+  initial_state.regs.eax = password0
+  initial_state.regs.ebx = password1
+  initial_state.regs.edx = password2
 
-  simulation = project.factory.simgr(initial_state)
+  simulation = project.factory.simgr(initial_state) 
 
   def is_successful(state):
     stdout_output = state.posix.dumps(sys.stdout.fileno())
-    return ???
+    if b'Good Job.\n' in stdout_output:
+      return True
+    else: return False
 
   def should_abort(state):
     stdout_output = state.posix.dumps(sys.stdout.fileno())
-    return ???
+    if b'Try again.\n' in  stdout_output:
+      return True
+    else: return False  # :boolean
 
   simulation.explore(find=is_successful, avoid=should_abort)
 
@@ -62,15 +68,16 @@ def main(argv):
     # Solve for the symbolic values. If there are multiple solutions, we only
     # care about one, so we can use eval, which returns any (but only one)
     # solution. Pass eval the bitvector you want to solve for.
-    # (!)
-    solution0 = solution_state.se.eval(password0)
-    ...
+    # (!) NOTE: state.se is deprecated, use state.solver (it's exactly the same).
+    solution0 = format(solution_state.solver.eval(password0), 'x') # format result as hexadecimal without 0x
+    solution1 = format(solution_state.solver.eval(password1), 'x')
+    solution2 = format(solution_state.solver.eval(password2), 'x')
 
     # Aggregate and format the solutions you computed above, and then print
     # the full string. Pay attention to the order of the integers, and the
     # expected base (decimal, octal, hexadecimal, etc).
-    solution = ???  # :string
-    print solution
+    solution = solution0 + " " + solution1 + " " + solution2  # :string
+    print("[+] Success! Solution is: {}".format(solution))
   else:
     raise Exception('Could not find the solution')
 
