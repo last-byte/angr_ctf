@@ -13,6 +13,7 @@ import angr
 import claripy
 import sys
 
+
 def main():
   path_to_binary = "09_angr_hooks"
   project = angr.Project(path_to_binary)
