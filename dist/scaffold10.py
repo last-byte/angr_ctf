@@ -26,7 +26,7 @@ import claripy
 import sys
 
 def main(argv):
-  path_to_binary = argv[1]
+  path_to_binary = "./10_angr_simprocedures"
   project = angr.Project(path_to_binary)
 
   initial_state = project.factory.entry_state()
