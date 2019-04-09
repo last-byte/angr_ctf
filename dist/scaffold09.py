@@ -11,10 +11,9 @@
 
 import angr
 import claripy
-import sys
 
-def main(argv):
-  path_to_binary = argv[1]
+def main():
+  path_to_binary = "09_angr_hooks"
   project = angr.Project(path_to_binary)
 
   # Since Angr can handle the initial call to scanf, we can start from the
@@ -92,4 +91,4 @@ def main(argv):
     raise Exception('Could not find the solution')
 
 if __name__ == '__main__':
-  main(sys.argv)
+  main()
