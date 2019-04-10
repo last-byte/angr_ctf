@@ -2,7 +2,7 @@ import angr
 import claripy
 import sys
 
-def main(argv):
+def main():
   path_to_binary = "05_angr_symbolic_memory"
   project = angr.Project(path_to_binary)
 
@@ -12,9 +12,9 @@ def main(argv):
   # The binary is calling scanf("%8s %8s %8s %8s").
   # (!)
   password0 = claripy.BVS('password0', 64)
-  password1 = claripy.BVS('password0', 64)
-  password2 = claripy.BVS('password0', 64)
-  password3 = claripy.BVS('password0', 64)
+  password1 = claripy.BVS('password1', 64)
+  password2 = claripy.BVS('password2', 64)
+  password3 = claripy.BVS('password3', 64)
 
   # Determine the address of the global variable to which scanf writes the user
   # input. The function 'initial_state.memory.store(address, value)' will write
@@ -56,11 +56,11 @@ def main(argv):
     solution2 = solution_state.solver.eval(password2,cast_to=bytes)
     solution3 = solution_state.solver.eval(password3,cast_to=bytes)
     
-    solution = solution0 + solution1 + solution2 + solution3
+    solution = solution0 + b" " + solution1 + b" " + solution2 + b" " + solution3
 
     print("[+] Success! Solution is: {}".format(solution.decode("utf-8")))
   else:
     raise Exception('Could not find the solution')
 
 if __name__ == '__main__':
-  main(sys.argv)
+  main()
